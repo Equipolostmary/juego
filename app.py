@@ -1,48 +1,71 @@
-
 import streamlit as st
-import time
+import random
+from PIL import Image
 
-st.set_page_config(page_title="Vapea con LostMary", layout="centered")
+st.set_page_config(page_title="Sabores Lost Mary", layout="wide", page_icon="🍓")
 
-st.markdown("# 🌈 Vapea con LostMary")
-st.image("assets/logo.png")
-st.markdown("Recolecta sabores 🍓, evita los malos 🚫 y derrota a RELX 💀")
+# ==== CARGA DE IMÁGENES ====
+lostmary_img = Image.open("assets/lostmary.png")
+relx_img = Image.open("assets/relx.png")
+capsula_img = Image.open("assets/capsulas/mango.png")  # Puedes cambiar esto por rotación de sabores
 
-# Reproductor de música
-audio_file = open('assets/pop_music.mp3', 'rb')
-st.audio(audio_file.read(), format='audio/mp3')
+# ==== ESTADO DEL JUEGO ====
+if 'player_pos' not in st.session_state:
+    st.session_state.player_pos = [1, 1]
+if 'enemy_pos' not in st.session_state:
+    st.session_state.enemy_pos = [5, 5]
+if 'capsulas' not in st.session_state:
+    st.session_state.capsulas = [[3, 2], [6, 1], [2, 4]]
+if 'score' not in st.session_state:
+    st.session_state.score = 0
 
-if "sabores" not in st.session_state:
-    st.session_state.sabores = 0
-    st.session_state.capsulas = 0
-    st.session_state.transformado = False
-    st.session_state.enemigo = False
+# ==== MAPA DEL JUEGO ====
+MAP_WIDTH, MAP_HEIGHT = 7, 7
 
-if st.button("🎮 Empezar"):
-    st.session_state.sabores = 0
-    st.session_state.capsulas = 0
-    st.session_state.transformado = False
-    st.session_state.enemigo = False
+def draw_grid():
+    grid = ""
+    for y in range(MAP_HEIGHT):
+        for x in range(MAP_WIDTH):
+            if [x, y] == st.session_state.player_pos:
+                grid += "🟥"  # Personaje Lost Mary
+            elif [x, y] == st.session_state.enemy_pos:
+                grid += "🟦"  # Enemigo RELX
+            elif [x, y] in st.session_state.capsulas:
+                grid += "🟡"  # Cápsula
+            else:
+                grid += "⬜"
+        grid += "\n"
+    return grid
 
-if st.session_state.sabores < 12:
-    if st.button("🍓 Recolectar sabor"):
-        st.session_state.sabores += 1
-        st.image(f"assets/sabores/sabor{st.session_state.sabores}.png")
-        st.success(f"Sabor {st.session_state.sabores} conseguido!")
-        if st.session_state.sabores == 12:
-            st.balloons()
-            st.session_state.transformado = True
+# ==== MOVIMIENTO ====
+def move(direction):
+    x, y = st.session_state.player_pos
+    if direction == "up" and y > 0:
+        y -= 1
+    elif direction == "down" and y < MAP_HEIGHT - 1:
+        y += 1
+    elif direction == "left" and x > 0:
+        x -= 1
+    elif direction == "right" and x < MAP_WIDTH - 1:
+        x += 1
+    st.session_state.player_pos = [x, y]
 
-if st.session_state.transformado:
-    st.image("assets/personaje.png", caption="¡Eres un Tappo Air!")
-    if st.session_state.capsulas < 10:
-        if st.button("💊 Recolectar cápsula"):
-            st.session_state.capsulas += 1
-            st.image(f"assets/capsulas/capsula{st.session_state.capsulas}.png")
-            if st.session_state.capsulas == 10:
-                st.session_state.enemigo = True
+    # Recolectar cápsula
+    if [x, y] in st.session_state.capsulas:
+        st.session_state.capsulas.remove([x, y])
+        st.session_state.score += 1
 
-if st.session_state.enemigo:
-    st.image("assets/relx.png", caption="RELX el Monstruo")
-    st.markdown("Le lanzas tus sabores frutales 🌈✨")
-    st.success("¡RELX ha sido derrotado por el sabor superior! 🎉")
+# ==== UI ====
+st.markdown("## 🎮 Sabores Lost Mary")
+st.markdown("**Recoge las cápsulas sin que el RELX te atrape.**")
+
+col1, col2 = st.columns([2, 1])
+with col1:
+    st.text(draw_grid())
+with col2:
+    st.image(lostmary_img, width=100)
+    st.write("Puntaje:", st.session_state.score)
+    st.button("⬅️", on_click=lambda: move("left"))
+    st.button("➡️", on_click=lambda: move("right"))
+    st.button("⬆️", on_click=lambda: move("up"))
+    st.button("⬇️", on_click=lambda: move("down"))
