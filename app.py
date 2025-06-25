@@ -1,31 +1,13 @@
 import streamlit as st
 import random
 from PIL import Image
-import os
 
 st.set_page_config(page_title="Sabores Lost Mary", layout="wide", page_icon="🍓")
 
-# ==== PRUEBA DE EXISTENCIA DE ARCHIVOS ====
-st.write("🔍 Verificando archivos...")
-st.write("assets/lostmary.png:", os.path.exists("assets/lostmary.png"))
-st.write("assets/relx.png:", os.path.exists("assets/relx.png"))
-st.write("assets/capsulas/mango.png:", os.path.exists("assets/capsulas/mango.png"))
-
-# ==== CARGA DE IMÁGENES CON CONTROL DE ERRORES ====
-try:
-    lostmary_img = Image.open("assets/lostmary.png")
-except Exception as e:
-    st.error(f"❌ Error cargando 'lostmary.png': {e}")
-
-try:
-    relx_img = Image.open("assets/relx.png")
-except Exception as e:
-    st.error(f"❌ Error cargando 'relx.png': {e}")
-
-try:
-    capsula_img = Image.open("assets/capsulas/mango.png")
-except Exception as e:
-    st.error(f"❌ Error cargando cápsula mango.png: {e}")
+# ==== CARGA DE IMÁGENES ====
+lostmary_img = Image.open("assets/lostmary.png")
+relx_img = Image.open("assets/relx.png")
+# capsula_img = Image.open("assets/capsulas/mango.png")  # ← Comentado por si da error
 
 # ==== ESTADO DEL JUEGO ====
 if 'player_pos' not in st.session_state:
@@ -37,7 +19,7 @@ if 'capsulas' not in st.session_state:
 if 'score' not in st.session_state:
     st.session_state.score = 0
 
-# ==== MAPA ====
+# ==== MAPA DEL JUEGO ====
 MAP_WIDTH, MAP_HEIGHT = 7, 7
 
 def draw_grid():
@@ -45,11 +27,11 @@ def draw_grid():
     for y in range(MAP_HEIGHT):
         for x in range(MAP_WIDTH):
             if [x, y] == st.session_state.player_pos:
-                grid += "🟥"
+                grid += "🟥"  # Personaje Lost Mary
             elif [x, y] == st.session_state.enemy_pos:
-                grid += "🟦"
+                grid += "🟦"  # Enemigo RELX
             elif [x, y] in st.session_state.capsulas:
-                grid += "🟡"
+                grid += "🟡"  # Cápsula
             else:
                 grid += "⬜"
         grid += "\n"
@@ -68,6 +50,7 @@ def move(direction):
         x += 1
     st.session_state.player_pos = [x, y]
 
+    # Recolectar cápsula
     if [x, y] in st.session_state.capsulas:
         st.session_state.capsulas.remove([x, y])
         st.session_state.score += 1
@@ -80,8 +63,7 @@ col1, col2 = st.columns([2, 1])
 with col1:
     st.text(draw_grid())
 with col2:
-    if 'lostmary_img' in locals():
-        st.image(lostmary_img, width=100)
+    st.image(lostmary_img, width=100)
     st.write("Puntaje:", st.session_state.score)
     st.button("⬅️", on_click=lambda: move("left"))
     st.button("➡️", on_click=lambda: move("right"))
